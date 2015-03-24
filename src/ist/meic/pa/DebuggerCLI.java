@@ -3,22 +3,30 @@ package ist.meic.pa;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.NotFoundException;
+
 public class DebuggerCLI {
 
 	public static void main(String[] args) {
 
-		String programToDebug = args[0];		
-
 		try {
-
 			
-			// TODO: ir buscar class 'a classpool
+			if(args.length < 1){
+				System.out.println("Usage: java ist.meic.pa.DebuggerCLI <programToDebug> [<args>]");
+				System.exit(1);
+			}
 			
-			// Get class of the program to debug
-			Class<?> program = Class.forName(programToDebug);
-			// Get the method 'main' of the program to debug
-			Method main = program.getMethod("main", String[].class);
-
+			ClassPool pool = ClassPool.getDefault();
+			CtClass ctClass = pool.get(args[0]);
+			
+			injectDebugCode(ctClass);
+						
+			Class<?> rtClass = ctClass.toClass();
+			Method main = rtClass.getMethod("main", args.getClass());
+			
 			// main_args: arguments of the program to debug
 			String[] main_args = new String[args.length - 1];
 
@@ -28,7 +36,7 @@ public class DebuggerCLI {
 			}
 
 			// Invoke the main method with the respective arguments
-			main.invoke(null, (Object) main_args);			
+			main.invoke(null, new Object[] { main_args });				
 
 
 		} catch (InvocationTargetException ite){
@@ -77,8 +85,6 @@ public class DebuggerCLI {
 
 		} catch(ArrayIndexOutOfBoundsException aiobe){
 
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 		} catch (SecurityException e) {
@@ -87,8 +93,17 @@ public class DebuggerCLI {
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
+		} catch (NotFoundException e) {
+			e.printStackTrace();
+		} catch (CannotCompileException e) {
+			e.printStackTrace();
 		}	
 
+	}
+
+	private static void injectDebugCode(CtClass ctClass) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
