@@ -54,17 +54,12 @@ public class DCLITranslator implements Translator {
 					
 					// Old method name
 					String methodName = m.getMethodName();
-									
+					System.out.println(methodName);
+					
 					// New method name
 					String newMethodName = methodName + "$debug";
+					System.out.println(newMethodName);
 					
-					
-					// Replace the method call
-					// $1: First parameter
-					// $_: Resulting value of the method call
-					// $proceed: Name of the method originally called
-					// $$: all the arguments
-					m.replace("{ $_ = " + newMethodName + "($$); }");
 					
 					// Create new method "$debug"
 					CtMethod newDebuggedMethod = null;
@@ -88,7 +83,7 @@ public class DCLITranslator implements Translator {
 							"} catch (java.lang.Exception e){"+
 							"	Object returnObject;" +
 							"	try {" +
-							"		returnObject = ist.meic.pa.DebuggerCLI.initCommandLine(this, e); " +
+							"		returnObject = ist.meic.pa.DebuggerCLI.initCommandLine($0, e); " +
 							"		return ($r) returnObject; " +
 							"	} catch (ist.meic.pa.DCLIThrowable t){ " +
 							"		if(t.getValue() == \"RETRY\"){" + 
@@ -98,14 +93,20 @@ public class DCLITranslator implements Translator {
 							"}");
 					
 					ctClass.addMethod(newDebuggedMethod);
-								
+					
+					// Replace the method call
+					// $1: First parameter
+					// $_: Resulting value of the method call
+					// $proceed: Name of the method originally called
+					// $$: all the arguments
+					m.replace("{ $_ = " + newMethodName + "($$); }");
+					
 					// Add to the map
 					debuggedMethods.put(methodName, "");
 
 					
 				}
 			});
-			
 		}
 	}	
 
