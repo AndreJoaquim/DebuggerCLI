@@ -36,7 +36,7 @@
 	
 	<target name="run" depends="jar">
 		<java fork="true" jar="./DebuggerCLI.jar">
-			<arg value="ist.meic.pa.test.Test01" />
+			<arg value="ist.meic.pa.test.Example" />
 		</java>
 	</target>
 

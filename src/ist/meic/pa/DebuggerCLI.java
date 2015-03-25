@@ -12,112 +12,133 @@ import javassist.Translator;
 
 public class DebuggerCLI {
 
-	public static Object initCommandLine(Object ct, Exception e) throws Exception, DCLIThrowable{
-		
-		System.out.print("DebuggerCLI:> ");
-		String input = System.console().readLine();
-		System.out.println("Command: " + input);
-		
-		String[] split_input = input.split(" ");
-		String command = split_input[0];
-		
-		// Abort:
-		// 		Terminates the execution of the application
-		if (command.equals("Abort")){
-			System.exit(1);
-			
-		// Info:
-		// 		Presents detailed information about the called object, its fields,
-		// 		and the call stack. The presented information follows the format
-		// 		described in the next section. 	
-		} else if (command.equals("Info")){
-			
-			//TODO:
-			
-		// Throw:
-		// 		Re-throws the exception, so that it may be handled by the next handler.	
-		} else if (command.equals("Throw")){
-		
-			throw e;
-			
-		// Return <value>:
-		// 		Ignores the exception and continues the execution of the application
-		//		assuming that the current method call returned <value>. For calls to methods
-		//		returning void the <value> is ignored. Note that <value> should be of a
-		//		primitive type.
-		} else if (command.equals("Return")) {
-			
-			String value = split_input[1];
-			
-			return value;
-			
-		} else if(command.equals("Get")){
-			
-		} else if(command.equals("Set")){
+	public static void test() {
+		System.out.println("entrei");
+	}
 
-		} else if(command.equals("Retry")){
-			
-			throw new DCLIThrowable("RETRY");
-			
-		} else {
-			
-			System.out.println("Unrecognized command");
-			return null;
-			
-		}
+	public static Object initCommandLine(Class<?> invocationTargetClass, Object invocationTarget, Class<?> invocationTargetReturnType, String invocationTargetMethodName, Class<?>[] invocationTargetParamsTypes, Object ... invocationTargetMethodParams) {
+
+		Method methodToInvoke;
+		System.out.println("99999 " + invocationTargetClass.getName());
 		
+		try {
+			System.out.println(invocationTargetMethodName);
+			methodToInvoke = invocationTargetClass.getDeclaredMethod(invocationTargetMethodName, invocationTargetParamsTypes);
+			Object invocationTargetReturn = methodToInvoke.invoke(invocationTarget, null);
+			
+		} catch (NoSuchMethodException e){ 
+			
+			e.printStackTrace();
+		}catch(SecurityException e) {
+			
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			
+			System.out.print("DebuggerCLI:> ");
+			String input = System.console().readLine();
+			System.out.println("Command: " + input);
+			
+			String[] split_input = input.split(" ");
+			String command = split_input[0];
+			
+			// Abort:
+			// 		Terminates the execution of the application
+			if (command.equals("Abort")){
+				System.exit(1);
+				
+			// Info:
+			// 		Presents detailed information about the called object, its fields,
+			// 		and the call stack. The presented information follows the format
+			// 		described in the next section. 	
+			} else if (command.equals("Info")){
+				
+				//TODO:
+				
+			// Throw:
+			// 		Re-throws the exception, so that it may be handled by the next handler.	
+			} else if (command.equals("Throw")){
+			
+				//TODO:
+				
+			// Return <value>:
+			// 		Ignores the exception and continues the execution of the application
+			//		assuming that the current method call returned <value>. For calls to methods
+			//		returning void the <value> is ignored. Note that <value> should be of a
+			//		primitive type.
+			} else if (command.equals("Return")) {
+				
+				String value = split_input[1];
+				
+				return value;
+				
+			} else if(command.equals("Get")){
+				
+			} else if(command.equals("Set")){
+
+			} else if(command.equals("Retry")){
+				
+				
+			} else {
+				
+				System.out.println("Unrecognized command");
+				return null;
+				
+			}
+		}
+
 		return null;
 		
 	}
-	
+
 	public static void main(String[] args) {
 
 		try {
-			
-			if(args.length < 1){
-				System.out.println("Usage: java ist.meic.pa.DebuggerCLI <programToDebug> [<args>]");
+
+			if (args.length < 1) {
+				System.out
+						.println("Usage: java ist.meic.pa.DebuggerCLI <programToDebug> [<args>]");
 				System.exit(1);
 			}
-			
+
 			// DebuggerCLI Translator
 			Translator translator = new DCLITranslator();
-			
+
 			ClassPool classPool = ClassPool.getDefault();
 			Loader classLoader = new Loader();
-			
+
 			classLoader.addTranslator(classPool, translator);
-			
+
 			// Get the programToDebug arguments
 			String[] restArgs = new String[args.length - 1];
 			System.arraycopy(args, 1, restArgs, 0, restArgs.length);
-			
-			classLoader.run(args[0], restArgs);	
 
+			classLoader.run(args[0], restArgs);
 
-		} catch(ArrayIndexOutOfBoundsException aiobe){
+		} catch (ArrayIndexOutOfBoundsException aiobe) {
 
 		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		} catch (SecurityException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		} catch (NotFoundException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		} catch (CannotCompileException e) {
 			e.printStackTrace();
 		} catch (Throwable e) {
 			System.out.println("classLoader.run throwed an exception");
 			e.printStackTrace();
-		}	
+		}
 
-	}
-
-	private static void injectDebugCode(CtClass ctClass) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

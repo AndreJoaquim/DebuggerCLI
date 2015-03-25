@@ -12,6 +12,7 @@ import javassist.NotFoundException;
 import javassist.Translator;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
+import ist.meic.pa.DebuggerCLI;
 
 public class DCLITranslator implements Translator {
 	
@@ -42,7 +43,24 @@ public class DCLITranslator implements Translator {
 		
 		// Edit all the constructors
 		for(CtConstructor ctConstructor: ctClass.getConstructors()){
-			
+			//Para cada metodo editar todas as methods call
+			ctConstructor.instrument(new ExprEditor(){
+				public void edit(MethodCall m) throws CannotCompileException {
+					
+					if(m.getClassName() != "DebuggerCLI"){
+
+						String oldMethodName = m.getMethodName();
+						
+						System.out.println("88" + oldMethodName);
+						
+						m.replace(" $_ = $proceed($$);");
+						//m.replace("$_ = $proceed($$);");
+						//m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine($class , $0 , $type , \"" + oldMethodName + "\" , $sig, $$  );");
+						
+					}
+										
+				}
+			});
 		}
 		
 		// Edit all the remaining methods
@@ -52,59 +70,19 @@ public class DCLITranslator implements Translator {
 			ctMethod.instrument(new ExprEditor(){
 				public void edit(MethodCall m) throws CannotCompileException {
 					
-					// Old method name
-					String methodName = m.getMethodName();
-					System.out.println(methodName);
-					
-					// New method name
-					String newMethodName = methodName + "$debug";
-					System.out.println(newMethodName);
-					
-					
-					// Create new method "$debug"
-					CtMethod newDebuggedMethod = null;
-					
-					try {
-						newDebuggedMethod = CtNewMethod.copy(m.getMethod(), newMethodName, ctClass, null);
-					} catch (NotFoundException e) {
-						e.printStackTrace();
-					}
-					
-					//AINDA E PRECISO CONFIRMAR ISTO
-					try {
-						newDebuggedMethod.setExceptionTypes(ctMethod.getExceptionTypes());
-					} catch (NotFoundException e) {
-						e.printStackTrace();
-					}
-					
-					newDebuggedMethod.setBody(
-							"try {" +
-							"	return ($r) "+ methodName + "($$);" +
-							"} catch (java.lang.Exception e){"+
-							"	Object returnObject;" +
-							"	try {" +
-							"		returnObject = ist.meic.pa.DebuggerCLI.initCommandLine($0, e); " +
-							"		return ($r) returnObject; " +
-							"	} catch (ist.meic.pa.DCLIThrowable t){ " +
-							"		if(t.getValue() == \"RETRY\"){" + 
-							"			" + newMethodName + "($$);" + 
-							"		}" + 
-							"	}" +
-							"}");
-					
-					ctClass.addMethod(newDebuggedMethod);
-					
-					// Replace the method call
-					// $1: First parameter
-					// $_: Resulting value of the method call
-					// $proceed: Name of the method originally called
-					// $$: all the arguments
-					m.replace("{ $_ = " + newMethodName + "($$); }");
-					
-					// Add to the map
-					debuggedMethods.put(methodName, "");
+					if(m.getClassName() != "DebuggerCLI"){
 
-					
+						String oldMethodName = m.getMethodName();
+						
+						System.out.println("88" + oldMethodName);
+						
+						m.replace(" $_ = $proceed($$);");
+						//m.replace("$_ = $proceed($$);");
+						//m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine($class , $0 , $type , \"" + oldMethodName + "\" , $sig, $$  );");
+						
+					}
+
+										
 				}
 			});
 		}
