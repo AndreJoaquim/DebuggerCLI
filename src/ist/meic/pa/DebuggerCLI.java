@@ -6,7 +6,9 @@ import java.lang.reflect.Method;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.Loader;
 import javassist.NotFoundException;
+import javassist.Translator;
 
 public class DebuggerCLI {
 
@@ -19,24 +21,19 @@ public class DebuggerCLI {
 				System.exit(1);
 			}
 			
-			ClassPool pool = ClassPool.getDefault();
-			CtClass ctClass = pool.get(args[0]);
+			// DebuggerCLI Translator
+			Translator translator = new DCLITranslator();
 			
-			injectDebugCode(ctClass);
-						
-			Class<?> rtClass = ctClass.toClass();
-			Method main = rtClass.getMethod("main", args.getClass());
+			ClassPool classPool = ClassPool.getDefault();
+			Loader classLoader = new Loader();
 			
-			// main_args: arguments of the program to debug
-			String[] main_args = new String[args.length - 1];
-
-			// Get the arguments
-			for(int i = 1; i < args.length; i++){
-				main_args[i - 1] = args[i];
-			}
-
-			// Invoke the main method with the respective arguments
-			main.invoke(null, new Object[] { main_args });				
+			classLoader.addTranslator(classPool, translator);
+			
+			// Get the programToDebug arguments
+			String[] restArgs = new String[args.length - 1];
+			System.arraycopy(args, 1, restArgs, 0, restArgs.length);
+			
+			classLoader.run(args[0], restArgs);	
 
 
 		} catch (InvocationTargetException ite){
@@ -96,6 +93,9 @@ public class DebuggerCLI {
 		} catch (NotFoundException e) {
 			e.printStackTrace();
 		} catch (CannotCompileException e) {
+			e.printStackTrace();
+		} catch (Throwable e) {
+			System.out.println("classLoader.run throwed an exception");
 			e.printStackTrace();
 		}	
 
