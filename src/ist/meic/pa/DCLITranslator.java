@@ -36,7 +36,7 @@ public class DCLITranslator implements Translator {
 											 CannotCompileException {		
 	}
 
-	void insertDebugCode(CtClass ctClass) throws NotFoundException,
+	void insertDebugCode(final CtClass ctClass) throws NotFoundException,
 												 CannotCompileException,
 												 ClassNotFoundException {
 		
@@ -46,7 +46,7 @@ public class DCLITranslator implements Translator {
 		}
 		
 		// Edit all the remaining methods
-		for(CtMethod ctMethod: ctClass.getDeclaredMethods()) {
+		for(final CtMethod ctMethod: ctClass.getDeclaredMethods()) {
 			
 			//Para cada metodo editar todas as methods call
 			ctMethod.instrument(new ExprEditor(){
@@ -75,6 +75,13 @@ public class DCLITranslator implements Translator {
 						e.printStackTrace();
 					}
 					
+					//AINDA E PRECISO CONFIRMAR ISTO
+					try {
+						newDebuggedMethod.setExceptionTypes(ctMethod.getExceptionTypes());
+					} catch (NotFoundException e) {
+						e.printStackTrace();
+					}
+					
 					newDebuggedMethod.setBody(
 							"try {" +
 							"	return ($r) "+ methodName + "($$);" +
@@ -83,7 +90,7 @@ public class DCLITranslator implements Translator {
 							"	try {" +
 							"		returnObject = ist.meic.pa.DebuggerCLI.initCommandLine(this, e); " +
 							"		return ($r) returnObject; " +
-							"	} catch (DCLIThrowable t){ " +
+							"	} catch (ist.meic.pa.DCLIThrowable t){ " +
 							"		if(t.getValue() == \"RETRY\"){" + 
 							"			" + newMethodName + "($$);" + 
 							"		}" + 

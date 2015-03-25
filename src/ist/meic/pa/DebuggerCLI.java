@@ -12,6 +12,64 @@ import javassist.Translator;
 
 public class DebuggerCLI {
 
+	public static Object initCommandLine(Object ct, Exception e) throws Exception, DCLIThrowable{
+		
+		System.out.print("DebuggerCLI:> ");
+		String input = System.console().readLine();
+		System.out.println("Command: " + input);
+		
+		String[] split_input = input.split(" ");
+		String command = split_input[0];
+		
+		// Abort:
+		// 		Terminates the execution of the application
+		if (command.equals("Abort")){
+			System.exit(1);
+			
+		// Info:
+		// 		Presents detailed information about the called object, its fields,
+		// 		and the call stack. The presented information follows the format
+		// 		described in the next section. 	
+		} else if (command.equals("Info")){
+			
+			//TODO:
+			
+		// Throw:
+		// 		Re-throws the exception, so that it may be handled by the next handler.	
+		} else if (command.equals("Throw")){
+		
+			throw e;
+			
+		// Return <value>:
+		// 		Ignores the exception and continues the execution of the application
+		//		assuming that the current method call returned <value>. For calls to methods
+		//		returning void the <value> is ignored. Note that <value> should be of a
+		//		primitive type.
+		} else if (command.equals("Return")) {
+			
+			String value = split_input[1];
+			
+			return value;
+			
+		} else if(command.equals("Get")){
+			
+		} else if(command.equals("Set")){
+
+		} else if(command.equals("Retry")){
+			
+			throw new DCLIThrowable("RETRY");
+			
+		} else {
+			
+			System.out.println("Unrecognized command");
+			return null;
+			
+		}
+		
+		return null;
+		
+	}
+	
 	public static void main(String[] args) {
 
 		try {
@@ -35,50 +93,6 @@ public class DebuggerCLI {
 			
 			classLoader.run(args[0], restArgs);	
 
-
-		} catch (InvocationTargetException ite){
-
-			System.out.print("DebuggerCLI:> ");
-			String input = System.console().readLine();
-			System.out.println("Command: " + input);
-			
-			String[] split_input = input.split(" ");
-			String command = split_input[0];
-			
-			// Abort:
-			// 		Terminates the execution of the application
-			if (command.equals("Abort")){
-				return;
-				
-			// Info:
-			// 		Presents detailed information about the called object, its fields,
-			// 		and the call stack. The presented information follows the format
-			// 		described in the next section. 	
-			} else if (command.equals("Info")){
-				
-			// Throw:
-			// 		Re-throws the exception, so that it may be handled by the next handler.	
-			} else if (command.equals("Throw")){
-			
-			// Return <value>:
-			// 		Ignores the exception and continues the execution of the application
-			//		assuming that the current method call returned <value>. For calls to methods
-			//		returning void the <value> is ignored. Note that <value> should be of a
-			//		primitive type.
-			} else if (command.equals("Return")) {
-				
-				String value = split_input[1];
-				
-			} else if(command.equals("Get")){
-				
-			} else if(command.equals("Set")){
-
-			} else if(command.equals("Retry")){
-				
-			} else {				
-				System.out.println("Unrecognized command");
-				return;				
-			}
 
 		} catch(ArrayIndexOutOfBoundsException aiobe){
 
