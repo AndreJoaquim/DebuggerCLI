@@ -47,15 +47,23 @@ public class DCLITranslator implements Translator {
 			ctConstructor.instrument(new ExprEditor(){
 				public void edit(MethodCall m) throws CannotCompileException {
 					
-					if(m.getClassName() != "DebuggerCLI"){
+					String methodClassName = ctClass.getName();
 
+					
+					if(!methodClassName.contains("DebuggerCLI") && !methodClassName.contains("javassist")){
+						
 						String oldMethodName = m.getMethodName();
 						
-						System.out.println("88" + oldMethodName);
+						String methodReturnType = "";
 						
-						m.replace(" $_ = $proceed($$);");
-						//m.replace("$_ = $proceed($$);");
-						//m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine($class , $0 , $type , \"" + oldMethodName + "\" , $sig, $$  );");
+						try {
+							methodReturnType = m.getMethod().getReturnType().getName();
+						} catch (NotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args  );");
 						
 					}
 										
@@ -70,15 +78,24 @@ public class DCLITranslator implements Translator {
 			ctMethod.instrument(new ExprEditor(){
 				public void edit(MethodCall m) throws CannotCompileException {
 					
-					if(m.getClassName() != "DebuggerCLI"){
+					String methodClassName = ctClass.getName();
+					
+					if(!methodClassName.contains("DebuggerCLI")&&!methodClassName.contains("javassist")){
+						
+
 
 						String oldMethodName = m.getMethodName();
+						String methodReturnType = "";
+						try {
+							methodReturnType = m.getMethod().getReturnType().getName();
+						} catch (NotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						
-						System.out.println("88" + oldMethodName);
-						
-						m.replace(" $_ = $proceed($$);");
+						//m.replace(" $_ = $proceed($$);");
 						//m.replace("$_ = $proceed($$);");
-						//m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine($class , $0 , $type , \"" + oldMethodName + "\" , $sig, $$  );");
+						m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args  );");
 						
 					}
 

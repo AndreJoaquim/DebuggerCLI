@@ -2,10 +2,10 @@ package ist.meic.pa;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
-import javassist.CtClass;
 import javassist.Loader;
 import javassist.NotFoundException;
 import javassist.Translator;
@@ -16,15 +16,30 @@ public class DebuggerCLI {
 		System.out.println("entrei");
 	}
 
-	public static Object initCommandLine(Class<?> invocationTargetClass, Object invocationTarget, Class<?> invocationTargetReturnType, String invocationTargetMethodName, Class<?>[] invocationTargetParamsTypes, Object ... invocationTargetMethodParams) {
+	public static Object initCommandLine(String invocationTargetClassName,
+										 Object invocationTarget, 
+										 String invocationTargetReturnType,
+										 String invocationTargetMethodName,
+									 	 Object[] invocationTargetMethodParams) {
 
 		Method methodToInvoke;
-		System.out.println("99999 " + invocationTargetClass.getName());
+		System.out.println("[invocationTargetClassName] " + invocationTargetClassName);
+		
+		ArrayList<Class<?>> invocationTargetParameterTypes = new ArrayList<Class<?>>();
+		for(Object param : invocationTargetMethodParams){
+			System.out.println("[ParameterType]" + param.getClass().getName());
+			invocationTargetParameterTypes.add(param.getClass());
+		}
+		
 		
 		try {
-			System.out.println(invocationTargetMethodName);
-			methodToInvoke = invocationTargetClass.getDeclaredMethod(invocationTargetMethodName, invocationTargetParamsTypes);
-			Object invocationTargetReturn = methodToInvoke.invoke(invocationTarget, null);
+			System.out.println("[invocationTargetMethodName]" + invocationTargetMethodName);
+			
+			
+			Class<?> invocationTargetClass = Class.forName(invocationTargetClassName);
+			
+			methodToInvoke = invocationTargetClass.getDeclaredMethod(invocationTargetMethodName, invocationTargetParameterTypes.toArray(new Class<?>[invocationTargetParameterTypes.size()]));
+			Object invocationTargetReturn = methodToInvoke.invoke(invocationTarget, invocationTargetMethodParams);
 			
 		} catch (NoSuchMethodException e){ 
 			
@@ -37,6 +52,9 @@ public class DebuggerCLI {
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
 			
@@ -91,6 +109,7 @@ public class DebuggerCLI {
 				
 			}
 		}
+		
 
 		return null;
 		
