@@ -80,7 +80,7 @@ public class DCLITranslator implements Translator {
 					String methodClassName = ctClass.getName();
 					
 					// Filter the methods of our Debugger and the javassist
-					if(!methodClassName.contains("DebuggerCLI")&&!methodClassName.contains("javassist")){
+					if(!methodClassName.contains("DebuggerCLI") && !methodClassName.contains("javassist")){
 						
 						String oldMethodName = m.getMethodName();
 						String methodReturnType = "";

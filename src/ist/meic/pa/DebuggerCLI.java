@@ -3,6 +3,7 @@ package ist.meic.pa;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -14,11 +15,11 @@ import javassist.NotFoundException;
 import javassist.Translator;
 
 public class DebuggerCLI {
-
+	
 	public static Object initCommandLine(String invocationTargetClassName,
 			Object invocationTarget, String invocationTargetReturnType,
 			String invocationTargetMethodName,
-			Object[] invocationTargetMethodParams) {
+			Object[] invocationTargetMethodParams) throws Throwable {
 
 		Method methodToInvoke;
 		Object invocationTargetReturn = null;
@@ -57,11 +58,13 @@ public class DebuggerCLI {
 			}
 		}
 
+		Class<?> invocationTargetClass = null;
+		
 		try {
 			// System.out.println("[invocationTargetMethodName]" +
 			// invocationTargetMethodName);
 
-			Class<?> invocationTargetClass = Class.forName(invocationTargetClassName);
+			invocationTargetClass = Class.forName(invocationTargetClassName);
 
 			Class<?>[] invocationTargetMethodArguments = invocationTargetParameterTypes.toArray(new Class<?>[invocationTargetParameterTypes.size()]);
 
@@ -87,7 +90,7 @@ public class DebuggerCLI {
 		} catch (InvocationTargetException e) {
 
 			System.out.println("[" + e.getTargetException().getClass().getName() + "]: "
-					+ e.getTargetException().getMessage());
+					+ e.getTargetException().getMessage() + "." + invocationTargetMethodName);
 			
 			while (true) {
 				
@@ -113,7 +116,7 @@ public class DebuggerCLI {
 					System.out.println("Exiting DebuggerCLI...");
 					System.exit(1);
 
-					// Info:
+				// Info:
 					// Presents detailed information about the called object,
 					// its fields,
 					// and the call stack. The presented information follows the
@@ -123,14 +126,14 @@ public class DebuggerCLI {
 
 					// TODO:
 
-					// Throw:
+				// Throw:
 					// Re-throws the exception, so that it may be handled by the
 					// next handler.
 				} else if (command.equals("Throw")) {
+					
+					throw e.getTargetException();
 
-					// TODO:
-
-					// Return <value>:
+				// Return <value>:
 					// Ignores the exception and continues the execution of the
 					// application
 					// assuming that the current method call returned <value>.
@@ -164,9 +167,64 @@ public class DebuggerCLI {
 						// TODO; Add Extension to handle non-primitive classes;
 					}
 
+				// Get <field name>
+				//		Reads the field named <field name> of the called object.
 				} else if (command.equals("Get")) {
 
+					if(split_input.length != 2){
+						System.out.println("Invalid command syntax");
+						System.out.println("Usage: Get <field name> . For more info, use Help command");
+						continue;
+					}
+					
+					String field_name = split_input[1];
+					
+					Field field = invocationTargetClass.getDeclaredField(field_name);										
+					field.setAccessible(true);				
+					Object value = field.get(invocationTarget);
+					System.out.println(value);					
+					
+				// Set <field name> <new value>
+				//		Writes the field named <field name> of the called object, assigning it the <new value>.
 				} else if (command.equals("Set")) {
+					
+					if(split_input.length != 3){
+						System.out.println("Invalid command syntax");
+						System.out.println("Usage: Set <field name> <new value>. For more info, use Help command");
+					}
+					
+					String field_name = split_input[1];
+					String new_value = split_input[2];
+										
+					Field field = invocationTargetClass.getDeclaredField(field_name);										
+					field.setAccessible(true);				
+					String field_type = field.getType().getName();
+					
+					Object value = null;
+					
+					// Convert the input in the return type
+					if (field_type.equals("int")) {
+						value = Integer.parseInt(new_value);
+					} else if (field_type.equals("byte")) {
+						value = Byte.parseByte(new_value);
+					} else if (field_type.equals("long")) {
+						value = Long.parseLong(new_value);
+					} else if (field_type.equals("short")) {
+						value = Short.parseShort(new_value);
+					} else if (field_type.equals("double")) {
+						value = Double.parseDouble(new_value);
+					} else if (field_type.equals("float")) {
+						value = Float.parseFloat(new_value);
+					} else if (field_type.equals("boolean")) {
+						value = Boolean.parseBoolean(new_value);
+					} else if (field_type.equals("char")) {
+						value = new_value.charAt(0);
+					} else {
+						value = new_value;
+						// TODO; Add Extension to handle non-primitive classes;
+					}
+					
+					field.set(invocationTarget, value);
 
 				} else if (command.equals("Retry")) {
 
@@ -175,9 +233,25 @@ public class DebuggerCLI {
 							invocationTargetMethodName,
 							invocationTargetMethodParams);
 					
+				} else if (command.equals("Help")){
+					
+					System.out.println("Abort:	Terminates the execution of the application.");
+					System.out.println("Info:	Presents detailed information about the called object,"
+							+ "its fields, and the call stack. The presented information "
+							+ "follows the format described in the next section.");
+					System.out.println("Throw:	Re-throws the exception, so that it may be"
+							+ "handled by the next handler.");
+					System.out.println("Return <value>:	Ignores the exception and continues the execution of the application assuming that the"
+							+ "current method call returned <value>. For calls to methods returning void the <value> is ignored. Note"
+							+ "that <value> should be of a primitive type.");
+					System.out.println("Get <field name>:	Reads the field named <field name> of the called object.");
+					System.out.println("Set <field name> <new value>:	Writes the field named <field name> of the called"
+							+ "object, assigning it the <new value>.");
+					System.out.println("Retry:	Repeats the method call that was interrupted.");
+					
 				} else {
 
-					System.out.println("Unrecognized command");
+					System.out.println("Unrecognized command. For help, type Help");
 
 				}
 			}
@@ -226,6 +300,7 @@ public class DebuggerCLI {
 			e.printStackTrace();
 		} catch (Throwable e) {
 			System.out.println("[Exception thrown] classLoader.run throwed an exception");
+			System.out.println("[Class Name]:" + e.getClass().getName());
 			e.printStackTrace();
 		}
 
