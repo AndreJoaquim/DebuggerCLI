@@ -16,8 +16,6 @@ import ist.meic.pa.DebuggerCLI;
 
 public class DCLITranslator implements Translator {
 	
-	private HashMap<String, String> debuggedMethods = new HashMap<String, String>();
-
 	@Override
 	public void onLoad(ClassPool pool, String className) throws NotFoundException,
 	CannotCompileException {
@@ -51,7 +49,7 @@ public class DCLITranslator implements Translator {
 					String methodClassName = ctClass.getName();
 
 					// Filter the methods of our Debugger and the javassist
-					if(!methodClassName.contains("DebuggerCLI") && !methodClassName.contains("javassist")){
+					if(methodClassName.contains("ist.meic.pa.test") && !methodClassName.contains("DebuggerCLI") && !methodClassName.contains("javassist")){
 						
 						String oldMethodName = m.getMethodName();
 						String methodReturnType = "";
@@ -80,7 +78,7 @@ public class DCLITranslator implements Translator {
 					String methodClassName = ctClass.getName();
 					
 					// Filter the methods of our Debugger and the javassist
-					if(!methodClassName.contains("DebuggerCLI") && !methodClassName.contains("javassist")){
+					if(methodClassName.contains("ist.meic.pa.test") && !methodClassName.contains("DebuggerCLI") && !methodClassName.contains("javassist")){
 						
 						String oldMethodName = m.getMethodName();
 						String methodReturnType = "";

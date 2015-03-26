@@ -16,11 +16,27 @@ import javassist.Translator;
 
 public class DebuggerCLI {
 	
+	private static CallStack callStack = new CallStack();
+
+	private static void updateCallStack(String invocationTargetClassName, String invocationTargetMethodName, Object[] invocationTargetMethodParams){
+		
+		CallStackElement newElement = new CallStackElement(invocationTargetClassName, invocationTargetMethodName);
+				
+		for(int i = 0; i < invocationTargetMethodParams.length; i++){
+			newElement.addArgument(invocationTargetMethodParams[i]);
+		}
+		
+		callStack.addElement(newElement);
+		
+	}
+	
 	public static Object initCommandLine(String invocationTargetClassName,
 			Object invocationTarget, String invocationTargetReturnType,
 			String invocationTargetMethodName,
 			Object[] invocationTargetMethodParams) throws Throwable {
 
+		updateCallStack(invocationTargetClassName, invocationTargetMethodName, invocationTargetMethodParams);
+		
 		Method methodToInvoke;
 		Object invocationTargetReturn = null;
 		
@@ -75,22 +91,32 @@ public class DebuggerCLI {
 		} catch (NoSuchMethodException e) {
 
 			e.printStackTrace();
+			
 		} catch (SecurityException e) {
 
 			e.printStackTrace();
+			
 		} catch (IllegalAccessException e) {
 
 			e.printStackTrace();
+			
 		} catch (IllegalArgumentException e) {
 
 			e.printStackTrace();
+			
 		} catch (ClassNotFoundException e) {
 			
 			e.printStackTrace();
+			
 		} catch (InvocationTargetException e) {
 
-			System.out.println("[" + e.getTargetException().getClass().getName() + "]: "
-					+ e.getTargetException().getMessage() + "." + invocationTargetMethodName);
+			String message = e.getTargetException().getClass().getName();
+			
+			// If there is a message from the TargetException, include it in the message to be printed
+			if(e.getTargetException().getMessage() != null)
+				message += ": " + e.getTargetException().getMessage();
+			
+			System.out.println(message);
 			
 			while (true) {
 				
@@ -105,8 +131,6 @@ public class DebuggerCLI {
 					ioe.printStackTrace();
 				}
 				
-				System.out.println("Command: " + input);
-
 				String[] split_input = input.split(" ");
 				String command = split_input[0];
 
@@ -124,7 +148,32 @@ public class DebuggerCLI {
 					// described in the next section.
 				} else if (command.equals("Info")) {
 
-					// TODO:
+					// Syntax:
+					//
+					// Called Object: <called object or null if static>
+					// 		Fields: <field1> ... <fieldN>
+					// Call stack:
+					// <called class>.<called method>(<arg1>,...,<argN>)
+					// <called class>.<called method>(<arg1>,...,<argN>)
+					
+					System.out.print("Called Object: ");
+					
+					if(invocationTarget != null) System.out.print(invocationTarget + "\n");
+					
+					Field[] declaredFields = invocationTarget.getClass().getDeclaredFields();
+					
+					if(declaredFields.length != 0){
+						System.out.print("\tFields:");
+						for (Field field: declaredFields){
+							System.out.print(" " + field.getName());
+						}
+						System.out.print("\n");
+					}
+					
+					System.out.println("Call stack:");
+					
+					callStack.printStack();
+					
 
 				// Throw:
 					// Re-throws the exception, so that it may be handled by the
@@ -195,36 +244,44 @@ public class DebuggerCLI {
 					
 					String field_name = split_input[1];
 					String new_value = split_input[2];
-										
-					Field field = invocationTargetClass.getDeclaredField(field_name);										
+					
+					Field field = null;
+					
+					try {
+						field = invocationTargetClass.getDeclaredField(field_name);
+					} catch (NoSuchFieldException nsfe){
+						System.out.println("The field " + field_name + " does not exist in " + invocationTarget.getClass().getName());
+						continue;
+					}
+					
 					field.setAccessible(true);				
 					String field_type = field.getType().getName();
 					
-					Object value = null;
+					Object new_value_obj = null;
 					
 					// Convert the input in the return type
 					if (field_type.equals("int")) {
-						value = Integer.parseInt(new_value);
+						new_value_obj = Integer.parseInt(new_value);
 					} else if (field_type.equals("byte")) {
-						value = Byte.parseByte(new_value);
+						new_value_obj = Byte.parseByte(new_value);
 					} else if (field_type.equals("long")) {
-						value = Long.parseLong(new_value);
+						new_value_obj = Long.parseLong(new_value);
 					} else if (field_type.equals("short")) {
-						value = Short.parseShort(new_value);
+						new_value_obj = Short.parseShort(new_value);
 					} else if (field_type.equals("double")) {
-						value = Double.parseDouble(new_value);
+						new_value_obj = Double.parseDouble(new_value);
 					} else if (field_type.equals("float")) {
-						value = Float.parseFloat(new_value);
+						new_value_obj = Float.parseFloat(new_value);
 					} else if (field_type.equals("boolean")) {
-						value = Boolean.parseBoolean(new_value);
+						new_value_obj = Boolean.parseBoolean(new_value);
 					} else if (field_type.equals("char")) {
-						value = new_value.charAt(0);
+						new_value_obj = new_value.charAt(0);
 					} else {
-						value = new_value;
+						new_value_obj = new_value;
 						// TODO; Add Extension to handle non-primitive classes;
 					}
 					
-					field.set(invocationTarget, value);
+					field.set(invocationTarget, new_value_obj);
 
 				} else if (command.equals("Retry")) {
 
@@ -235,19 +292,19 @@ public class DebuggerCLI {
 					
 				} else if (command.equals("Help")){
 					
-					System.out.println("Abort:	Terminates the execution of the application.");
-					System.out.println("Info:	Presents detailed information about the called object,"
+					System.out.println("Abort:				Terminates the execution of the application.");
+					System.out.println("Info:				Presents detailed information about the called object,"
 							+ "its fields, and the call stack. The presented information "
 							+ "follows the format described in the next section.");
-					System.out.println("Throw:	Re-throws the exception, so that it may be"
+					System.out.println("Throw:				Re-throws the exception, so that it may be"
 							+ "handled by the next handler.");
-					System.out.println("Return <value>:	Ignores the exception and continues the execution of the application assuming that the"
+					System.out.println("Return <value>:			Ignores the exception and continues the execution of the application assuming that the"
 							+ "current method call returned <value>. For calls to methods returning void the <value> is ignored. Note"
 							+ "that <value> should be of a primitive type.");
-					System.out.println("Get <field name>:	Reads the field named <field name> of the called object.");
+					System.out.println("Get <field name>:		Reads the field named <field name> of the called object.");
 					System.out.println("Set <field name> <new value>:	Writes the field named <field name> of the called"
 							+ "object, assigning it the <new value>.");
-					System.out.println("Retry:	Repeats the method call that was interrupted.");
+					System.out.println("Retry:				Repeats the method call that was interrupted.");
 					
 				} else {
 
@@ -269,7 +326,7 @@ public class DebuggerCLI {
 				System.out.println("Usage: java ist.meic.pa.DebuggerCLI <programToDebug> [<args>]");
 				System.exit(1);
 			}
-
+									
 			// DebuggerCLI Translator
 			Translator translator = new DCLITranslator();
 
@@ -281,6 +338,9 @@ public class DebuggerCLI {
 			// Get the programToDebug arguments
 			String[] restArgs = new String[args.length - 1];
 			System.arraycopy(args, 1, restArgs, 0, restArgs.length);
+			
+			updateCallStack(args[0], "main", args);
+			callStack.printStack();
 
 			classLoader.run(args[0], restArgs);
 
