@@ -43,26 +43,24 @@ public class DCLITranslator implements Translator {
 		
 		// Edit all the constructors
 		for(CtConstructor ctConstructor: ctClass.getConstructors()){
-			//Para cada metodo editar todas as methods call
+			
+			// For each constructor edit all the method calls
 			ctConstructor.instrument(new ExprEditor(){
 				public void edit(MethodCall m) throws CannotCompileException {
 					
 					String methodClassName = ctClass.getName();
 
-					
+					// Filter the methods of our Debugger and the javassist
 					if(!methodClassName.contains("DebuggerCLI") && !methodClassName.contains("javassist")){
 						
 						String oldMethodName = m.getMethodName();
-						
 						String methodReturnType = "";
 						
 						try {
 							methodReturnType = m.getMethod().getReturnType().getName();
 						} catch (NotFoundException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						
 						
 						m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args  );");
 						
@@ -75,22 +73,21 @@ public class DCLITranslator implements Translator {
 		// Edit all the remaining methods
 		for(final CtMethod ctMethod: ctClass.getDeclaredMethods()) {
 			
-			//Para cada metodo editar todas as methods call
+			// For each method edit all the method calls
 			ctMethod.instrument(new ExprEditor(){
 				public void edit(MethodCall m) throws CannotCompileException {
 					
 					String methodClassName = ctClass.getName();
 					
+					// Filter the methods of our Debugger and the javassist
 					if(!methodClassName.contains("DebuggerCLI")&&!methodClassName.contains("javassist")){
 						
-
-
 						String oldMethodName = m.getMethodName();
 						String methodReturnType = "";
+						
 						try {
 							methodReturnType = m.getMethod().getReturnType().getName();
 						} catch (NotFoundException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 						

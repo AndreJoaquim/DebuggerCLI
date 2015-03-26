@@ -15,10 +15,6 @@ import javassist.Translator;
 
 public class DebuggerCLI {
 
-	public static void test() {
-		System.out.println("entrei");
-	}
-
 	public static Object initCommandLine(String invocationTargetClassName,
 			Object invocationTarget, String invocationTargetReturnType,
 			String invocationTargetMethodName,
@@ -90,8 +86,7 @@ public class DebuggerCLI {
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
 
-			System.out.println("["
-					+ e.getTargetException().getClass().getName() + "]: "
+			System.out.println("[" + e.getTargetException().getClass().getName() + "]: "
 					+ e.getTargetException().getMessage());
 			
 			while (true) {
@@ -147,6 +142,7 @@ public class DebuggerCLI {
 
 					String value = split_input[1];
 
+					// Convert the input in the return type
 					if (invocationTargetReturnType.equals("int")) {
 						return Integer.parseInt(value);
 					} else if (invocationTargetReturnType.equals("byte")) {
@@ -215,7 +211,7 @@ public class DebuggerCLI {
 			classLoader.run(args[0], restArgs);
 
 		} catch (ArrayIndexOutOfBoundsException aiobe) {
-
+			aiobe.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			// e.printStackTrace();
 		} catch (SecurityException e) {
@@ -229,7 +225,7 @@ public class DebuggerCLI {
 		} catch (CannotCompileException e) {
 			e.printStackTrace();
 		} catch (Throwable e) {
-			System.out.println("classLoader.run throwed an exception");
+			System.out.println("[Exception thrown] classLoader.run throwed an exception");
 			e.printStackTrace();
 		}
 
