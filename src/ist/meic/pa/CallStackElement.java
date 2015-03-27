@@ -22,7 +22,10 @@ public class CallStackElement {
 	
 	@Override
 	public String toString(){
-		// <class>.<method>(<arg1>,...,<argN>)
+		
+		// Syntax:
+		// 		<class>.<method>(<arg1>,...,<argN>)
+		
 		String description = _className + "." + _methodName;
 		
 		if(_arguments.size() != 0){

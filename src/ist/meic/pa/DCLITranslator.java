@@ -1,18 +1,14 @@
 package ist.meic.pa;
 
-import java.util.HashMap;
-
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtMethod;
-import javassist.CtNewMethod;
 import javassist.NotFoundException;
 import javassist.Translator;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
-import ist.meic.pa.DebuggerCLI;
 
 public class DCLITranslator implements Translator {
 	

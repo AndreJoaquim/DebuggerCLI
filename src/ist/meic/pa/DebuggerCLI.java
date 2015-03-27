@@ -30,6 +30,7 @@ public class DebuggerCLI {
 			newElement.addArgument(invocationTargetMethodParams[i]);
 		}
 		
+		// Push new call to the stack
 		callStack.push(newElement);
 		
 	}
