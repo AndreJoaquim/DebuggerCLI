@@ -30,7 +30,7 @@ public class DebuggerCLI {
 			newElement.addArgument(invocationTargetMethodParams[i]);
 		}
 		
-		callStack.addElement(newElement);
+		callStack.push(newElement);
 		
 	}
 	
@@ -96,6 +96,8 @@ public class DebuggerCLI {
 			methodToInvoke = invocationTargetClass.getDeclaredMethod(invocationTargetMethodName, invocationTargetMethodArguments);
 			
 			invocationTargetReturn = methodToInvoke.invoke(invocationTarget, invocationTargetMethodParams);
+
+			callStack.pop();
 
 		} catch (NoSuchMethodException e) {
 
