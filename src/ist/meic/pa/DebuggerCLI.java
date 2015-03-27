@@ -3,6 +3,7 @@ package ist.meic.pa;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream.GetField;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -10,6 +11,9 @@ import java.util.ArrayList;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.CtNewMethod;
 import javassist.Loader;
 import javassist.NotFoundException;
 import javassist.Translator;
@@ -35,7 +39,12 @@ public class DebuggerCLI {
 			String invocationTargetMethodName,
 			Object[] invocationTargetMethodParams) throws Throwable {
 
-		updateCallStack(invocationTargetClassName, invocationTargetMethodName, invocationTargetMethodParams);
+		if(invocationTargetMethodName.equals("main$debug")){
+			updateCallStack(invocationTargetClassName, "main", invocationTargetMethodParams);
+		} else {
+			updateCallStack(invocationTargetClassName, invocationTargetMethodName, invocationTargetMethodParams);
+		}
+		
 		
 		Method methodToInvoke;
 		Object invocationTargetReturn = null;
@@ -338,9 +347,20 @@ public class DebuggerCLI {
 			// Get the programToDebug arguments
 			String[] restArgs = new String[args.length - 1];
 			System.arraycopy(args, 1, restArgs, 0, restArgs.length);
+
+			// Putting the main info on the CallStack
+			//		We need this because when we load the new class, the variables
+			//		are garbage collected and we lose them.
+			CtClass mainClass = classPool.get(args[0]);
+			CtMethod mainMethod = mainClass.getDeclaredMethod("main");
 			
-			updateCallStack(args[0], "main", args);
-			callStack.printStack();
+			// Create a new main$debug method that contains the main code
+			CtMethod newMain = CtNewMethod.copy(mainMethod, "main$debug", mainClass, null);
+			mainClass.addMethod(newMain);
+			
+			// Change the body of the main to call our main$debug that will call our debugger's code
+			// just as any other method call
+			mainMethod.setBody("{ main$debug($$); }");
 
 			classLoader.run(args[0], restArgs);
 

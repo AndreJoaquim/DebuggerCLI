@@ -16,8 +16,8 @@ public class CallStack {
 	public CallStackElement getElement(int index) { return _callStack.get(index); }
 
 	public void printStack(){
-		for(CallStackElement callStackElement : _callStack){
-			System.out.println(callStackElement);
+		for(int i = _callStack.size() - 1; i >= 0; i--){
+			System.out.println(_callStack.get(i));
 		}
 	}
 

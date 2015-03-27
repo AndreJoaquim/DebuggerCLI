@@ -34,7 +34,8 @@ public class DCLITranslator implements Translator {
 	public void start(ClassPool pool) throws NotFoundException,
 											 CannotCompileException {		
 	}
-
+	
+	
 	void insertDebugCode(final CtClass ctClass) throws NotFoundException,
 												 CannotCompileException,
 												 ClassNotFoundException {
