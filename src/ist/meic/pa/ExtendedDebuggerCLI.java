@@ -23,6 +23,131 @@ public class ExtendedDebuggerCLI {
 
 	private static CallStack callStack = new CallStack();
 
+	private static int findClosingBrackets( int begin, String[] args){
+		
+		int brackets = 1;
+		
+		for(int i = begin; i < args.length; i++){
+			
+			if(args[i].equals("{")){
+				brackets++;
+			} else if(args[i].equals("}")){
+				brackets--;
+				if(brackets == 0)
+					return i;
+			}
+		}
+		
+		return -1;
+	}
+	
+	private static Object createInstance(Class<?> newClass, String[] args, int beginIndex, int end) throws DCLIThrowable{
+		
+		//Test if arguments are correct
+		ArrayList<Class<?>> returnClassParamTypes = new ArrayList<Class<?>>();
+		ArrayList<Object> returnClassParamValues = new ArrayList<Object>();
+		
+		//Flag error parsing arguments
+		boolean flagParserArgsError = false;
+		
+		for(int i = beginIndex ; (i < end) && !flagParserArgsError; i++){
+			
+			if(args[i].equals("{")){ // New instance
+				
+				//Get the class of param i
+				Class<?> classAux = null;
+				
+				try {
+					
+					classAux = Class.forName(args[ ++i ]);
+					
+					
+				} catch (ClassNotFoundException e) {
+					
+					throw new DCLIThrowable("PARSE ERROR");
+				}
+				
+				returnClassParamTypes.add(classAux);
+				
+				Object newRecursiveObject = createInstance(classAux, args, ++i , findClosingBrackets(i, args));
+				
+				returnClassParamValues.add(newRecursiveObject);
+				
+			}else if(args[i].equals("@")){ // Get another instance
+				
+				//TODO:
+			
+			}else{ // Pair <type> <value>
+				
+				try {
+					//Get the class of param i
+					Class<?> classAux = Class.forName(args[i]);
+					
+					returnClassParamTypes.add(classAux);
+					
+					//Instantiate 
+					Object valueAux = classAux.getConstructor(String.class).newInstance(args[++i]);
+					
+					returnClassParamValues.add(valueAux);
+					
+				} catch (ClassNotFoundException e2) {
+					
+					System.out.println("Class of type " + args[i-1] + " of argument " + args[i] + " not found");
+					flagParserArgsError = true;
+					
+				} catch (NoSuchMethodException e2) {
+					
+					System.out.println("Class of type " + args[i-1] + " of argument " + args[i] + " does not have a constuctor with the required arguments");
+					flagParserArgsError = true;
+					
+				} catch (SecurityException e2) {
+					
+					System.out.println("Class of type " + args[i-1] + " of argument " + args[i] + " has non-accessible constructure");
+					flagParserArgsError = true;
+					
+				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e2) {
+					
+					System.out.println("Class of type " + args[i-1] + " of argument " + args[i] + " threw an exception of type " + e2.getMessage());
+					flagParserArgsError = true;
+					
+				}
+				
+			}
+		
+		}
+		
+		if(flagParserArgsError)
+			throw new DCLIThrowable("PARSE ERROR - Input Error");
+		
+		//Test if class accepts constructor with specific parameters
+		Constructor<?> returnClassConstructor = null;
+		
+		try {
+			
+			
+			returnClassConstructor = newClass.getConstructor((Class<?>[]) returnClassParamTypes.toArray( new Class<?>[returnClassParamTypes.size()]));
+			
+		} catch (NoSuchMethodException e2) {
+			
+			System.out.println("Class of type " + newClass.getName() + " does not have a constuctor with the required arguments");
+			throw new DCLIThrowable("PARSE ERROR - No Constructor");
+			
+		} catch (SecurityException e2) {
+			
+			System.out.println("Class of type " + newClass.getName() + " has non-accessible constructure");
+			throw new DCLIThrowable("PARSE ERROR - No Acessible Constructor");
+		}
+		
+		try {
+			return returnClassConstructor.newInstance((Object[]) returnClassParamValues.toArray( new Object[returnClassParamValues.size()]));
+			
+		} catch (InstantiationException | IllegalAccessException| IllegalArgumentException | InvocationTargetException e) {
+
+			throw new DCLIThrowable("PARSE ERROR - Cant Instantiate Object");
+		}
+		
+	}
+	
 	private static void updateCallStack(String invocationTargetClassName,
 			String invocationTargetMethodName,
 			Object[] invocationTargetMethodParams) {
@@ -328,74 +453,11 @@ public class ExtendedDebuggerCLI {
 					
 					}
 					
-					//Test if arguments are correct
-					ArrayList<Class<?>> returnClassParamTypes = new ArrayList<Class<?>>();
-					ArrayList<Object> returnClassParamValues = new ArrayList<Object>();
-					
-					//Flag error parsing arguments
-					boolean flagParserArgsError = false;
-					
-					for(int i = 2 ; (i < split_input.length) && !flagParserArgsError; i+=2){
-						
-						try {
-							//Get the class of param i
-							Class<?> classAux = Class.forName(split_input[i]);
-							
-							returnClassParamTypes.add(classAux);
-							
-							//Instantiate 
-							Object valueAux = classAux.getConstructor(String.class).newInstance(split_input[i+1]);
-							
-							returnClassParamValues.add(valueAux);
-							
-						} catch (ClassNotFoundException e2) {
-							
-							System.out.println("Class of type " + split_input[i] + " of argument " + split_input[i+1] + " not found");
-							flagParserArgsError = true;
-							
-						} catch (NoSuchMethodException e2) {
-							
-							System.out.println("Class of type " + split_input[i] + " of argument " + split_input[i+1] + " does not have a constuctor with the required arguments");
-							flagParserArgsError = true;
-							
-						} catch (SecurityException e2) {
-							
-							System.out.println("Class of type " + split_input[i] + " of argument " + split_input[i+1] + " has non-accessible constructure");
-							flagParserArgsError = true;
-							
-						} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e2) {
-							
-							System.out.println("Class of type " + split_input[i] + " of argument " + split_input[i+1] + " threw an exception of type " + e2.getMessage());
-							flagParserArgsError = true;
-							
-						}
-					}
-					
-					if(flagParserArgsError)
-						continue;
-					
-					//Test if class accepts constructor with specific parameters
-					Constructor<?> returnClassConstructor;
-					
-					try {
-						
-						returnClassConstructor = returnClass.getConstructor((Class<?>[]) returnClassParamTypes.toArray( new Class<?>[returnClassParamTypes.size()]));
-						
-					} catch (NoSuchMethodException e2) {
-						
-						System.out.println("Class of type " + className + " does not have a constuctor with the required arguments");
-						continue;
-						
-					} catch (SecurityException e2) {
-						
-						System.out.println("Class of type " + className + " has non-accessible constructure");
-						continue;
-					}
-						
-					Object returnObject = returnClassConstructor.newInstance((Object[]) returnClassParamValues.toArray( new Object[returnClassParamValues.size()]));
+					Object returnObject = createInstance(returnClass, split_input, 2, split_input.length -1);
 									
-
 					return returnObject;
+					
+					
 					// Get <field name>
 					// Reads the field named <field name> of the called object.
 				} else if (command.equals("Get")) {
@@ -599,7 +661,6 @@ public class ExtendedDebuggerCLI {
 			classLoader.run(args[0], restArgs);
 
 		} catch (ArrayIndexOutOfBoundsException aiobe) {
-			System.out.println("sdasfd");
 			aiobe.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
