@@ -34,9 +34,15 @@ public class CallStackElement {
 			
 			for(int i = 0; i <_arguments.size(); i++){
 				if(i >= _arguments.size() - 1){
-					description += _arguments.get(i).toString();
+					if(_arguments.get(i) == null)
+						description += "null";
+					else
+						description += _arguments.get(i).toString();
 				} else {
-					description += _arguments.get(i).toString() + ",";
+					if(_arguments.get(i) == null)
+						description += "null";
+					else
+						description += _arguments.get(i).toString() + ",";
 				}
 			}
 			
