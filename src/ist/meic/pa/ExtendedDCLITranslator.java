@@ -10,7 +10,7 @@ import javassist.Translator;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
-public class DCLITranslator implements Translator {
+public class ExtendedDCLITranslator implements Translator {
 	
 	@Override
 	public void onLoad(ClassPool pool, String className) throws NotFoundException,
@@ -57,7 +57,7 @@ public class DCLITranslator implements Translator {
 							e.printStackTrace();
 						}
 						
-						m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args  );");
+						m.replace(" $_ = ($r) ist.meic.pa.ExtendedDebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args  );");
 						
 					}
 										
@@ -87,7 +87,7 @@ public class DCLITranslator implements Translator {
 						}
 						
 						
-						m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args );");
+						m.replace(" $_ = ($r) ist.meic.pa.ExtendedDebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args );");
 						
 					}
 
