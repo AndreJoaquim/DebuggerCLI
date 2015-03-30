@@ -3,11 +3,11 @@ package ist.meic.pa;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream.GetField;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -29,9 +29,26 @@ public class DebuggerCLI {
 		CallStackElement newElement = new CallStackElement(	invocationTargetClassName, invocationTargetMethodName);
 
 		for (int i = 0; i < invocationTargetMethodParams.length; i++) {
-			
-			newElement.addArgument(invocationTargetMethodParams[i]);
-			
+
+			if (invocationTargetMethodName == "main") {
+				String parameterString = "";
+
+				ArrayList<String> parameterStringArray = new ArrayList<String>(
+						Arrays.asList((String[]) invocationTargetMethodParams[i]));
+
+				for (int j = 0; j < parameterStringArray.size(); j++) {
+					parameterString += parameterStringArray.get(j);
+
+					if (j != parameterStringArray.size() - 1) {
+						parameterString += ", ";
+					}
+
+				}
+
+				newElement.addArgument(parameterString);
+			} else
+				newElement.addArgument(invocationTargetMethodParams[i]);
+
 		}
 
 		// Push new call to the stack
@@ -218,6 +235,13 @@ public class DebuggerCLI {
 					// primitive type.
 				} else if (command.equals("Return")) {
 
+					if(invocationTargetReturnType == "void"){
+						if(!isMain)
+							callStack.pop();
+						
+						return null;
+					}
+					
 					if (split_input.length != 2) {
 						System.out.println("Invalid command syntax");
 						System.out
@@ -231,21 +255,21 @@ public class DebuggerCLI {
 						callStack.pop();
 					
 					// Convert the input in the return type
-					if (invocationTargetReturnType.equals("int")) {
+					if (invocationTargetReturnType.equals("int") || invocationTargetReturnType.equals("java.lang.Integer")) {
 						return Integer.parseInt(value);
-					} else if (invocationTargetReturnType.equals("byte")) {
+					} else if (invocationTargetReturnType.equals("byte") || invocationTargetReturnType.equals("java.lang.Byte")) {
 						return Byte.parseByte(value);
-					} else if (invocationTargetReturnType.equals("long")) {
+					} else if (invocationTargetReturnType.equals("long") || invocationTargetReturnType.equals("java.lang.Long")) {
 						return Long.parseLong(value);
-					} else if (invocationTargetReturnType.equals("short")) {
+					} else if (invocationTargetReturnType.equals("short") || invocationTargetReturnType.equals("java.lang.Short")) {
 						return Short.parseShort(value);
-					} else if (invocationTargetReturnType.equals("double")) {
+					} else if (invocationTargetReturnType.equals("double") || invocationTargetReturnType.equals("java.lang.Double")) {
 						return Double.parseDouble(value);
-					} else if (invocationTargetReturnType.equals("float")) {
+					} else if (invocationTargetReturnType.equals("float") || invocationTargetReturnType.equals("java.lang.Float")) {
 						return Float.parseFloat(value);
-					} else if (invocationTargetReturnType.equals("boolean")) {
+					} else if (invocationTargetReturnType.equals("boolean") || invocationTargetReturnType.equals("java.lang.Boolean")) {
 						return Boolean.parseBoolean(value);
-					} else if (invocationTargetReturnType.equals("char")) {
+					} else if (invocationTargetReturnType.equals("char") || invocationTargetReturnType.equals("java.lang.Charater")) {
 						return value.charAt(0);
 					} else {
 						return value;
@@ -301,21 +325,21 @@ public class DebuggerCLI {
 					Object new_value_obj = null;
 
 					// Convert the input in the return type
-					if (field_type.equals("int")) {
+					if (field_type.equals("int") || field_type.equals("java.lang.Integer")) {
 						new_value_obj = Integer.parseInt(new_value);
-					} else if (field_type.equals("byte")) {
+					} else if (field_type.equals("byte") || field_type.equals("java.lang.Byte")) {
 						new_value_obj = Byte.parseByte(new_value);
-					} else if (field_type.equals("long")) {
+					} else if (field_type.equals("long") || field_type.equals("java.lang.Long")) {
 						new_value_obj = Long.parseLong(new_value);
-					} else if (field_type.equals("short")) {
+					} else if (field_type.equals("short") || field_type.equals("java.lang.Short")) {
 						new_value_obj = Short.parseShort(new_value);
-					} else if (field_type.equals("double")) {
+					} else if (field_type.equals("double") || field_type.equals("java.lang.Double")) {
 						new_value_obj = Double.parseDouble(new_value);
-					} else if (field_type.equals("float")) {
+					} else if (field_type.equals("float") || field_type.equals("java.lang.Float")) {
 						new_value_obj = Float.parseFloat(new_value);
-					} else if (field_type.equals("boolean")) {
+					} else if (field_type.equals("boolean") || field_type.equals("java.lang.Boolean")) {
 						new_value_obj = Boolean.parseBoolean(new_value);
-					} else if (field_type.equals("char")) {
+					} else if (field_type.equals("char") || field_type.equals("java.lang.Charater")) {
 						new_value_obj = new_value.charAt(0);
 					} else {
 						new_value_obj = new_value;

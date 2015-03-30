@@ -4,7 +4,7 @@ public class A {
 
 	int a = 1;
 
-	public double foo(B b) {
+	public Double foo(B b, char c) {
 		System.out.println("Inside A.foo ");
 		if (a == 1) {
 			return b.bar(0);
