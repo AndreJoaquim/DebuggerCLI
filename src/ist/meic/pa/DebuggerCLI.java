@@ -26,8 +26,7 @@ public class DebuggerCLI {
 			String invocationTargetMethodName,
 			Object[] invocationTargetMethodParams) {
 
-		CallStackElement newElement = new CallStackElement(
-				invocationTargetClassName, invocationTargetMethodName);
+		CallStackElement newElement = new CallStackElement(	invocationTargetClassName, invocationTargetMethodName);
 
 		for (int i = 0; i < invocationTargetMethodParams.length; i++) {
 			
@@ -48,12 +47,10 @@ public class DebuggerCLI {
 		Boolean isMain = false;
 		
 		if (invocationTargetMethodName.equals("main$debug")) {
-			updateCallStack(invocationTargetClassName, "main",
-					invocationTargetMethodParams);
+			updateCallStack(invocationTargetClassName, "main", invocationTargetMethodParams);
 			isMain = true;
-		} else {
-			updateCallStack(invocationTargetClassName,
-					invocationTargetMethodName, invocationTargetMethodParams);
+		}else{
+			updateCallStack(invocationTargetClassName, invocationTargetMethodName, invocationTargetMethodParams);
 		}
 
 		Method methodToInvoke;
@@ -111,9 +108,19 @@ public class DebuggerCLI {
 					.getDeclaredMethod(invocationTargetMethodName,
 							invocationTargetMethodArguments);
 
-			invocationTargetReturn = methodToInvoke.invoke(invocationTarget,
-					invocationTargetMethodParams);
+			try {
+				
+				invocationTargetReturn = methodToInvoke.invoke(invocationTarget, invocationTargetMethodParams);
+				
+			} catch (NullPointerException e) {
+				
+				if(!isMain)
+					callStack.pop();
 
+				throw e;
+			}
+			
+			
 		} catch (InvocationTargetException e) {
 
 			String message = e.getTargetException().getClass().getName();
@@ -123,7 +130,7 @@ public class DebuggerCLI {
 			if (e.getTargetException().getMessage() != null)
 				message += ": " + e.getTargetException().getMessage();
 
-			// e.getTargetException().printStackTrace();
+			//e.getTargetException().printStackTrace();
 
 			System.out.println(message);
 
@@ -170,18 +177,20 @@ public class DebuggerCLI {
 
 					if (invocationTarget != null)
 						System.out.print(invocationTarget + "\n");
+					else
+						System.out.println("null");
 
 					
-					Field[] declaredFields = invocationTarget.getClass()
-							.getDeclaredFields();
-
-					if (declaredFields.length != 0) {
-						System.out.print("\tFields:");
-						for (Field field : declaredFields) {
-							System.out.print(" " + field.getName());
-						}
-						System.out.print("\n");
+					Class<?> invocationTargetClassToPrint = Class.forName(invocationTargetClassName);
+					
+					Field[] declaredFields = invocationTargetClassToPrint.getDeclaredFields();
+					
+					System.out.print("\tFields:");
+					
+					for (Field field : declaredFields) {
+						System.out.print(" " + field.getName());
 					}
+					System.out.print("\n");
 
 					System.out.println("Call stack:");
 
@@ -194,6 +203,9 @@ public class DebuggerCLI {
 					// next handler.
 				} else if (command.equals("Throw")) {
 
+					if(!isMain)
+						callStack.pop();
+					
 					throw e.getTargetException();
 
 					// Return <value>:
@@ -214,7 +226,10 @@ public class DebuggerCLI {
 					}
 					
 					String value = split_input[1];
-
+					
+					if(!isMain)
+						callStack.pop();
+					
 					// Convert the input in the return type
 					if (invocationTargetReturnType.equals("int")) {
 						return Integer.parseInt(value);
@@ -250,8 +265,7 @@ public class DebuggerCLI {
 
 					String field_name = split_input[1];
 
-					Field field = invocationTargetClass
-							.getDeclaredField(field_name);
+					Field field = invocationTargetClass.getDeclaredField(field_name);
 					field.setAccessible(true);
 					Object value = field.get(invocationTarget);
 					System.out.println(value);
@@ -277,9 +291,7 @@ public class DebuggerCLI {
 						field = invocationTargetClass
 								.getDeclaredField(field_name);
 					} catch (NoSuchFieldException nsfe) {
-						System.out.println("The field " + field_name
-								+ " does not exist in "
-								+ invocationTarget.getClass().getName());
+						System.out.println("The field " + field_name + " does not exist in " + invocationTarget.getClass().getName());
 						continue;
 					}
 
@@ -313,8 +325,9 @@ public class DebuggerCLI {
 					field.set(invocationTarget, new_value_obj);
 
 				} else if (command.equals("Retry")) {
-
-					callStack.pop();
+					
+					if(!isMain)
+						callStack.pop();
 					
 					return initCommandLine(invocationTargetClassName,
 							invocationTarget, invocationTargetReturnType,
@@ -375,11 +388,14 @@ public class DebuggerCLI {
 		} finally {
 
 			//System.out.println("name:" + invocationTargetMethodName);
-			if(!isMain)
-				callStack.pop();
+			//callStack.printStack();
 
 		}
+		
+		if(!isMain)
+			callStack.pop();
 
+		
 		return invocationTargetReturn;
 
 	}
@@ -414,8 +430,7 @@ public class DebuggerCLI {
 			CtMethod mainMethod = mainClass.getDeclaredMethod("main");
 
 			// Create a new main$debug method that contains the main code
-			CtMethod newMain = CtNewMethod.copy(mainMethod, "main$debug",
-					mainClass, null);
+			CtMethod newMain = CtNewMethod.copy(mainMethod, "main$debug", mainClass, null);
 			mainClass.addMethod(newMain);
 
 			// Change the body of the main to call our main$debug that will call

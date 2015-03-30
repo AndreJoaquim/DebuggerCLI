@@ -86,7 +86,7 @@ public class DCLITranslator implements Translator {
 							e.printStackTrace();
 						}
 						
-						m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args  );");
+						m.replace(" $_ = ($r) ist.meic.pa.DebuggerCLI.initCommandLine(\"" + m.getClassName() + "\" , $0 , \"" + methodReturnType + "\" , \"" + oldMethodName + "\" , $args );");
 						
 					}
 
